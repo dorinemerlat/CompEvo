@@ -16,7 +16,7 @@ def get_conda(environnement):
 
 def get_part():
     res = list()
-    for i in list(range(1,1001)):
+    for i in list(range(1,10001)):
         i = str(i)
         if len(i) == 1:
             i = '000' + i
@@ -27,7 +27,7 @@ def get_part():
         res.append(i)
     return res
 
-    
+
 include: "rules/run_orthomcl.smk"
 
 rule all:
