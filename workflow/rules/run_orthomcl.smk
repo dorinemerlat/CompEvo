@@ -6,8 +6,8 @@ rule reformat_fasta:
     log:
         "logs/reformat_fasta/{specie}.log"
     conda:
-        # get_conda("orthomcl")
-        "orthomcl"
+        get_conda("orthomcl")
+        # "orthomcl"
     threads: 20
     shell:
         """
@@ -24,8 +24,7 @@ rule clean_proteins:
     log:
         "logs/clean_proteins/{specie}.log"
     conda:
-        # get_conda("orthomcl")
-        "orthomcl"
+        get_conda("orthomcl")
     threads:20
     params:
         specie="{specie}",
@@ -67,13 +66,12 @@ rule make_blast:
     output:
         bank = "results/OrthoMCL/bank_blast.pdb"
     conda:
-        # get_conda("orthomcl")
-        "orthomcl"
+        get_conda("orthomcl")
     log:
         "logs/make_blast/make_blast.log"
     params:
         bank = "results/OrthoMCL/bank_blast"
-    threads:64
+    threads:100
     shell:
         """
         makeblastdb -in {input.good_proteins} -dbtype prot -parse_seqids -out {params.bank}
@@ -85,14 +83,13 @@ rule split_proteins:
     output:
         split_proteins = "results/OrthoMCL/blast/goodProteins.part-{part}.fasta"
     conda:
-        # get_conda("orthomcl")
-        "orthomcl"
+        get_conda("orthomcl")
     log:
          "logs/split_proteins/split_proteins-{part}.log"
     threads:1
     shell:
         """
-        fasta-splitter --n-parts 4 {input.good_proteins} --out-dir results/OrthoMCL/blast
+        fasta-splitter --n-parts 10000 {input.good_proteins} --out-dir results/OrthoMCL/blast
         """
 
 rule blast:
@@ -102,8 +99,7 @@ rule blast:
     output:
         goodProteins = "results/OrthoMCL/blast/goodProteins.part-{part}.tsv"    
     conda:
-        # get_conda("orthomcl")
-        "orthomcl"
+        get_conda("orthomcl")
     log:
         "logs/blast/goodProteins.part-{part}.log"
     params:
@@ -116,13 +112,12 @@ rule blast:
 
 rule merge_and_convert:
     input:
-        blast_split = expand("results/OrthoMCL/blast/goodProteins.part-{part}.tsv", part = ['1', '2', '3', '4'])
+        blast_split = dynamic("results/OrthoMCL/blast/goodProteins.part-{part}.tsv")
     output:
         blast_all = "results/OrthoMCL/blast_results.tsv"#,
         # blast_mysql = "results/OrthoMCL/similarSequences.txt"
     conda:
-        # get_conda("orthomcl")
-        "orthomcl"
+        get_conda("orthomcl")
     log:
         "logs/merge_and_convert/merge_and_convert.log"
     threads:1
