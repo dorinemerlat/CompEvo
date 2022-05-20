@@ -1,0 +1,27 @@
+configfile: "config/config.yaml"
+
+SPECIES = list()
+INFOS = config['species']
+for i in config['species']:
+    SPECIES.append(i)
+
+
+def get_code_taxon(wildcards):
+    return INFOS[wildcards.specie]['code']
+
+
+def get_conda(environnement):
+    return "../envs/" + environnement + ".yaml"
+
+
+include: "rules/run_orthomcl.smk"
+
+rule all:
+    input:
+        orthologs = "results/OrthoMCL/pairs/potentialOrthologs.txt",
+        inparalogs = "results/OrthoMCL/pairs/potentialInparalogs.txt",
+        coorthologs = "results/OrthoMCL/pairs/potentialCoorthologs.txt"
+
+
+
+

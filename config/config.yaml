@@ -1,0 +1,52 @@
+species: 
+  cryptops-parisi:
+    code : CRPA
+  cylindroiulus-punctatus:
+    code : CYPU
+  geophilus-carpophagus:
+    code: GECA
+  geophilus-flavus:
+    code: GEFL
+  geophilus-truncorum:
+    code: GETR
+  helicorthomorpha-holstii:
+    code: HEHO
+  henia-vesuviana:
+    code: HEVA
+  julus-scandinavius:
+    code: JUSD
+  julus-scanicus:
+    code : JUSI
+  megaphyllum-sjaelandicum:
+    code : MESJ
+  ommatoiulus-sabulosus:
+    code: OMSA
+  pachymerium-ferrugineum:
+    code: PAFE
+  polydesmus-angustus:
+     code: POAN
+  polydesmus-complanatus:
+    code: POCO
+  proteroiulus-fuscus:
+    code: PRFU
+  rossiulus-vilnensis:
+    code: ROVI
+  stenotaenia-linearis:
+    code: STLI
+  strigamia-acuminata:
+    code: STAC
+  strigamia-crassipes:
+    code: STCR
+  strigamia-maritima:
+    code: STMA
+  strigamia-transsilvanica:
+    code: STTR
+  trigoniulus-corallinus:
+    code: TRCO
+  xestoiulus-laeticollis:
+    code: XELA
+
+config_orthomcl:
+  dbLogin: 'orthomcl'
+  dbPassword: 'O3kj3NKmoseRwZP05wXynH5klqnn'
+  localHost: 'ena'
