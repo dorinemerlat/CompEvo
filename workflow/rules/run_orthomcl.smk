@@ -80,7 +80,8 @@ rule split_proteins:
     input:
         good_proteins = rules.filter_proteins.output
     output:
-        split_proteins = "results/OrthoMCL/blast/goodProteins.part-{part}.fasta"
+        # split_proteins = "results/OrthoMCL/blast/goodProteins.part-{part}.fasta"
+        split_link = temp("results/OrthoMCL/blast/split_link.temp")
     conda:
         get_conda("orthomcl")
     log:
@@ -89,12 +90,14 @@ rule split_proteins:
     shell:
         """
         fasta-splitter --n-parts 10000 {input.good_proteins} --out-dir results/OrthoMCL/blast
+        touch {input.split_link}
         """
 
 rule blast:
     input:
         bank = rules.make_blast.output.bank,
-        query = rules.split_proteins.output.split_proteins
+        query_link = rules.split_proteins.output.split_link,
+        query = "results/OrthoMCL/blast/goodProteins.part-{part}.fasta"
     output:
         goodProteins = "results/OrthoMCL/blast/goodProteins.part-{part}.tsv"    
     conda:
