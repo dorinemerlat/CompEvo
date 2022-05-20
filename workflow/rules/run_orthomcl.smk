@@ -80,23 +80,21 @@ rule split_proteins:
     input:
         good_proteins = rules.filter_proteins.output
     output:
-        # split_proteins = "results/OrthoMCL/blast/goodProteins.part-{part}.fasta"
-        split_link = temp("results/OrthoMCL/blast/split_link.temp")
+        split_proteins = expand("results/OrthoMCL/blast/goodProteins.part-{part}.fasta", part = get_part())
+        # split_link = temp("results/OrthoMCL/blast/split_link.temp")
     conda:
         get_conda("orthomcl")
     log:
-         "logs/split_proteins/split_proteins-{part}.log"
+         "logs/split_proteins/split_proteins.log"
     threads:1
     shell:
         """
         fasta-splitter --n-parts 10000 {input.good_proteins} --out-dir results/OrthoMCL/blast
-        touch {input.split_link}
         """
 
 rule blast:
     input:
         bank = rules.make_blast.output.bank,
-        query_link = rules.split_proteins.output.split_link,
         query = "results/OrthoMCL/blast/goodProteins.part-{part}.fasta"
     output:
         goodProteins = "results/OrthoMCL/blast/goodProteins.part-{part}.tsv"    
@@ -112,18 +110,6 @@ rule blast:
         blastp -db {params.bank} -query {input.query} -outfmt 6 -out {output.goodProteins}
         """
 
-def get_part():
-    res = list()
-    for i in list(range(1,1001)):
-        i = str(i)
-        if len(i) == 1:
-            i = '000' + i
-        elif len(i) == 2:
-            i = '00' + i
-        elif len(i) == 3:
-            i = '0' + i 
-        res.append(i)
-    return res
 
 rule merge_and_convert:
     input:
