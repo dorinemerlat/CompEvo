@@ -109,9 +109,22 @@ rule blast:
         blastp -db {params.bank} -query {input.query} -outfmt 6 -out {output.goodProteins}
         """
 
+def get_part():
+    res = list()
+    for i in list(range(1,1001)):
+        i = str(i)
+        if len(i) == 1:
+            i = '000' + i
+        elif len(i) == 2:
+            i = '00' + i
+        elif len(i) == 3:
+            i = '0' + i 
+        res.append(i)
+    return res
+
 rule merge_and_convert:
     input:
-        blast_split = dynamic("results/OrthoMCL/blast/goodProteins.part-{part}.tsv")
+        blast_split = expand("results/OrthoMCL/blast/goodProteins.part-{part}.tsv", part = get_part())
     output:
         blast_all = "results/OrthoMCL/blast_results.tsv"#,
         # blast_mysql = "results/OrthoMCL/similarSequences.txt"
