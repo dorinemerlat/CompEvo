@@ -49,8 +49,7 @@ rule filter_proteins:
     output:
         good_proteins = "results/OrthoMCL/goodProteins.fasta"
     conda:
-        # get_conda("orthomcl")
-        "orthomcl"
+        get_conda("orthomcl")
     log:
         "logs/filter_proteins/filter_proteins.log"
     threads:20
