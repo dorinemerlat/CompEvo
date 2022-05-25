@@ -116,7 +116,7 @@ rule merge_and_convert:
         blast_split = expand("results/OrthoMCL/blast/goodProteins.part-{part}.tsv", part = get_part())
     output:
         blast_all = "results/OrthoMCL/blast_results.tsv"#,
-        # blast_mysql = "results/OrthoMCL/similarSequences.txt"
+        blast_mysql = "results/OrthoMCL/similarSequences.txt"
     conda:
         get_conda("orthomcl")
     log:
@@ -125,64 +125,63 @@ rule merge_and_convert:
     shell:
         """
         cat {input.blast_split} >> {output.blast_all}
+        orthomclBlastParser {output.blast_all} results/OrthoMCL/compliantFasta/ >> {output.blast_mysql}
         """
-        # # orthomclBlastParser {output.blast_all} results/OrthoMCL/compliantFasta/ >> {output.blast_mysql}
-        # """
 
-# rule orthomcl_db:
-#     input:
-#         blast_mysql = rules.merge_and_convert.output.blast_mysql
-#     output:
-#         orthomcl_config = "results/OrthoMCL/orthomcl.config",
-#         mysql_dir = directory("results/OrthoMCL/mysql")
-#     conda:
-#         # get_conda("orthomcl")
-#         "orthomcl"
-#     threads:20   
-#     log:
-#         "logs/orthomcl_db/orthomcl_db.log"
-#     params:
-#         dbLogin = config['config_orthomcl']['dbLogin'],
-#         dbPassword = config['config_orthomcl']['dbPassword'],
-#         localHost = config['config_orthomcl']['localHost']
-#     shell:
-#         """
-#         cd results/OrthoMCL/
+rule orthomcl_db:
+    input:
+        blast_mysql = rules.merge_and_convert.output.blast_mysql
+    output:
+        orthomcl_config = "results/OrthoMCL/orthomcl.config",
+        mysql_dir = directory("results/OrthoMCL/mysql")
+    conda:
+        # get_conda("orthomcl")
+        "orthomcl"
+    threads:20   
+    log:
+        "logs/orthomcl_db/orthomcl_db.log"
+    params:
+        dbLogin = config['config_orthomcl']['dbLogin'],
+        dbPassword = config['config_orthomcl']['dbPassword'],
+        localHost = config['config_orthomcl']['localHost']
+    shell:
+        """
+        cd results/OrthoMCL/
 
-#         echo "dbVendor=mysql
-# dbConnectString=dbi:mysql:orthomcl:mysql_local_infile=1:localhost:{params.localHost}
-# dbLogin={params.dbLogin}
-# dbPassword={params.dbPassword}
-# similarSequencesTable=SimilarSequences
-# orthologTable=Ortholog
-# inParalogTable=InParalog
-# coOrthologTable=CoOrtholog
-# interTaxonMatchView=InterTaxonMatch
-# percentMatchCutoff=50
-# evalueExponentCutoff=-5
-# oracleIndexTblSpc=NONE
-#         " > {output.orthomcl_config}
+        echo "dbVendor=mysql
+dbConnectString=dbi:mysql:orthomcl:mysql_local_infile=1:localhost:{params.localHost}
+dbLogin={params.dbLogin}
+dbPassword={params.dbPassword}
+similarSequencesTable=SimilarSequences
+orthologTable=Ortholog
+inParalogTable=InParalog
+coOrthologTable=CoOrtholog
+interTaxonMatchView=InterTaxonMatch
+percentMatchCutoff=50
+evalueExponentCutoff=-5
+oracleIndexTblSpc=NONE
+        " > {output.orthomcl_config}
 
-#         orthomclInstallSchema {output.orthomcl_config}
+        orthomclInstallSchema {output.orthomcl_config}
 
-#         orthomclLoadBlast orthomcl.config {input.blast_mysql}
-#         """
+        orthomclLoadBlast orthomcl.config {input.blast_mysql}
+        """
 
-# rule compute_pairwise_relationships:
-#     input:
-#         rules.orthomcl_db.output.orthomcl_config
-#     output:
-#         orthologs = "results/OrthoMCL/pairs/potentialOrthologs.txt",
-#         inparalogs = "results/OrthoMCL/pairs/potentialInparalogs.txt",
-#         coorthologs = "results/OrthoMCL/pairs/potentialCoorthologs.txt"
-#     conda:
-#         # get_conda("orthomcl")
-#         "orthomcl"
-#     log:
-#         "logs/compute_pairwise_relationships/compute_pairwise_relationships.log"
-#     shell:
-#         """
-#         cd results/OrthoMCL
-#         orthomclPairs orthomcl.config pairs.log cleanup=no
-#         orthomclDumpPairsFiles orthomcl.config
-#         """
+rule compute_pairwise_relationships:
+    input:
+        rules.orthomcl_db.output.orthomcl_config
+    output:
+        orthologs = "results/OrthoMCL/pairs/potentialOrthologs.txt",
+        inparalogs = "results/OrthoMCL/pairs/potentialInparalogs.txt",
+        coorthologs = "results/OrthoMCL/pairs/potentialCoorthologs.txt"
+    conda:
+        # get_conda("orthomcl")
+        "orthomcl"
+    log:
+        "logs/compute_pairwise_relationships/compute_pairwise_relationships.log"
+    shell:
+        """
+        cd results/OrthoMCL
+        orthomclPairs orthomcl.config pairs.log cleanup=no
+        orthomclDumpPairsFiles orthomcl.config
+        """
