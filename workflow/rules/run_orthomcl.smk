@@ -128,43 +128,43 @@ rule merge_and_convert:
         orthomclBlastParser {output.blast_all} results/OrthoMCL/compliantFasta/ >> {output.blast_mysql}
         """
 
-# rule orthomcl_db:
-#     input:
-#         blast_mysql = rules.merge_and_convert.output.blast_mysql
-#     output:
-#         orthomcl_config = "results/OrthoMCL/orthomcl.config",
-#         mysql_dir = directory("results/OrthoMCL/mysql")
-#     conda:
-#         get_conda("orthomcl")
-#     threads:20   
-#     log:
-#         "logs/orthomcl_db/orthomcl_db.log"
-#     params:
-#         dbLogin = config['config_orthomcl']['dbLogin'],
-#         dbPassword = config['config_orthomcl']['dbPassword'],
-#         localHost = config['config_orthomcl']['localHost']
-#     shell:
-#         """
-#         cd results/OrthoMCL/
+rule orthomcl_db:
+    input:
+        blast_mysql = "results/OrthoMCL/similarSequences.txt"
+    output:
+        orthomcl_config = "results/OrthoMCL/orthomcl.config",
+        mysql_dir = directory("results/OrthoMCL/mysql")
+    conda:
+        get_conda("orthomcl")
+    threads:20   
+    log:
+        "logs/orthomcl_db/orthomcl_db.log"
+    params:
+        dbLogin = config['config_orthomcl']['dbLogin'],
+        dbPassword = config['config_orthomcl']['dbPassword'],
+        localHost = config['config_orthomcl']['localHost']
+    shell:
+        """
+        cd results/OrthoMCL/
 
-#         echo "dbVendor=mysql
-# dbConnectString=dbi:mysql:orthomcl:mysql_local_infile=1:localhost:{params.localHost}
-# dbLogin={params.dbLogin}
-# dbPassword={params.dbPassword}
-# similarSequencesTable=SimilarSequences
-# orthologTable=Ortholog
-# inParalogTable=InParalog
-# coOrthologTable=CoOrtholog
-# interTaxonMatchView=InterTaxonMatch
-# percentMatchCutoff=50
-# evalueExponentCutoff=-5
-# oracleIndexTblSpc=NONE
-#         " > {output.orthomcl_config}
+        echo "dbVendor=mysql
+dbConnectString=dbi:mysql:orthomcl:mysql_local_infile=1:localhost:{params.localHost}
+dbLogin={params.dbLogin}
+dbPassword={params.dbPassword}
+similarSequencesTable=SimilarSequences
+orthologTable=Ortholog
+inParalogTable=InParalog
+coOrthologTable=CoOrtholog
+interTaxonMatchView=InterTaxonMatch
+percentMatchCutoff=50
+evalueExponentCutoff=-5
+oracleIndexTblSpc=NONE
+        " > {output.orthomcl_config}
 
-#         orthomclInstallSchema {output.orthomcl_config}
+        orthomclInstallSchema {output.orthomcl_config}
 
-#         orthomclLoadBlast orthomcl.config {input.blast_mysql}
-#         """
+        orthomclLoadBlast orthomcl.config {input.blast_mysql}
+        """
 
 # rule compute_pairwise_relationships:
 #     input:
