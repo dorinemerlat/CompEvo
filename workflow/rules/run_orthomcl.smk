@@ -135,8 +135,7 @@ rule orthomcl_db:
         orthomcl_config = "results/OrthoMCL/orthomcl.config",
         mysql_dir = directory("results/OrthoMCL/mysql")
     conda:
-        # get_conda("orthomcl")
-        "orthomcl"
+        get_conda("orthomcl")
     threads:20   
     log:
         "logs/orthomcl_db/orthomcl_db.log"
@@ -167,21 +166,20 @@ oracleIndexTblSpc=NONE
         orthomclLoadBlast orthomcl.config {input.blast_mysql}
         """
 
-rule compute_pairwise_relationships:
-    input:
-        rules.orthomcl_db.output.orthomcl_config
-    output:
-        orthologs = "results/OrthoMCL/pairs/potentialOrthologs.txt",
-        inparalogs = "results/OrthoMCL/pairs/potentialInparalogs.txt",
-        coorthologs = "results/OrthoMCL/pairs/potentialCoorthologs.txt"
-    conda:
-        # get_conda("orthomcl")
-        "orthomcl"
-    log:
-        "logs/compute_pairwise_relationships/compute_pairwise_relationships.log"
-    shell:
-        """
-        cd results/OrthoMCL
-        orthomclPairs orthomcl.config pairs.log cleanup=no
-        orthomclDumpPairsFiles orthomcl.config
-        """
+# rule compute_pairwise_relationships:
+#     input:
+#         orthomcl_config = rules.orthomcl_db.output.orthomcl_config
+#     output:
+#         orthologs = "results/OrthoMCL/pairs/potentialOrthologs.txt",
+#         inparalogs = "results/OrthoMCL/pairs/potentialInparalogs.txt",
+#         coorthologs = "results/OrthoMCL/pairs/potentialCoorthologs.txt"
+#     conda:
+#         get_conda("orthomcl")
+#     log:
+#         "logs/compute_pairwise_relationships/compute_pairwise_relationships.log"
+#     shell:
+#         """
+#         cd results/OrthoMCL
+#         orthomclPairs orthomcl.config pairs.log cleanup=no
+#         orthomclDumpPairsFiles orthomcl.config
+#         """
