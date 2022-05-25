@@ -115,16 +115,16 @@ rule merge_and_convert:
     input:
         blast_split = expand("results/OrthoMCL/blast/goodProteins.part-{part}.tsv", part = get_part())
     output:
-        blast_all = "results/OrthoMCL/blast_results.tsv"#,
+        blast_all = "results/OrthoMCL/blast_results.tsv",
         blast_mysql = "results/OrthoMCL/similarSequences.txt"
     conda:
         get_conda("orthomcl")
     log:
         "logs/merge_and_convert/merge_and_convert.log"
-    threads:1
+    threads:10
     shell:
         """
-        cat {input.blast_split} >> {output.blast_all}
+        cat {input.blast_split} > {output.blast_all}
         orthomclBlastParser {output.blast_all} results/OrthoMCL/compliantFasta/ >> {output.blast_mysql}
         """
 
