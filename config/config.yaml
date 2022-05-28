@@ -1,59 +1,84 @@
 species: 
   cryptops-parisi:
     code : CRPA
+    order: 23
   cylindroiulus-punctatus:
     code : CYPU
+    order: 12
   geophilus-carpophagus:
     code: GECA
+    order: 21
   geophilus-flavus:
     code: GEFL
+    order: 22
   geophilus-truncorum:
     code: GETR
+    order: 20
   helicorthomorpha-holstii:
     code: HEHO
+    order: 3
   henia-vesuviana:
     code: HEVA
+    order: 17
   julus-scandinavius:
     code: JUSD
+    order: 11
   julus-scanicus:
     code : JUSI
+    order: 10
   megaphyllum-sjaelandicum:
     code : MESJ
+    order: 9
   ommatoiulus-sabulosus:
     code: OMSA
+    order: 8
   pachymerium-ferrugineum:
     code: PAFE
+    order: 19
   polydesmus-angustus:
      code: POAN
+     order: 5
   polydesmus-complanatus:
     code: POCO
+    order: 4
   proteroiulus-fuscus:
     code: PRFU
+    order: 6
   rossiulus-vilnensis:
     code: ROVI
+    order: 1
   stenotaenia-linearis:
     code: STLI
+    order: 18
   strigamia-acuminata:
     code: STAC
+    order: 13
   strigamia-crassipes:
     code: STCR
+    order: 14
   strigamia-maritima:
     code: STMA
+    order: 16
   strigamia-transsilvanica:
     code: STTR
+    order: 15
   trigoniulus-corallinus:
     code: TRCO
+    order: 2
   xestoiulus-laeticollis:
     code: XELA
-    ixodes-scapularis:
+    order: 7
+  ixodes-scapularis:
     code: IXSC
-    outgroup: yes
+    order: 24
   daphnia-pulex:
     code: DAPU
     outgroup: yes
+    order: 25
   drosophila-melanogaster:
     code: DRME
     outgroup: yes
+    order: 26
 
 config_orthomcl:
   dbLogin: 'orthomcl'

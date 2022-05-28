@@ -68,7 +68,7 @@ rule make_blast:
     log:
         "logs/make_blast.log"
     params:
-        bank = "results/OrthoMCL/bank_blast"
+        bank = "results/OrthoMCL/blastBank/bank_blast"
     threads:100
     shell:
         """
@@ -253,3 +253,4 @@ rule best_inflation:
 
 # trouver le meilleur outgroup
 
+# trier les protéines dans les fasta pour les mêmes dans le bon ordre
