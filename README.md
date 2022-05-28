@@ -3,12 +3,13 @@
 # CompEvo User Guide
 ## Comparative and Evolutionary Genomics Workflow
 
-Snakemake workflow for comparative and evolutionary genomics, il est fait pour analyser les prédictions générés par [EXOGAP](https://github.com/dorinemerlat/EXOGAP).
+Snakemake workflow for comparative and evolutionary genomics. It is specially adapted to analyze the predictions generated [EXOGAP](https://github.com/dorinemerlat/EXOGAP).
 
 ## Authors
 Dorine Merlat, iCube, University of Strasbourg, France, dorine.merlat@etu.unistra.fr
 
 ## What is CompEvo ?
+
 
 ## Getting Started
 ### Prerequisites

@@ -45,6 +45,15 @@ species:
     code: TRCO
   xestoiulus-laeticollis:
     code: XELA
+    ixodes-scapularis:
+    code: IXSC
+    outgroup: yes
+  daphnia-pulex:
+    code: DAPU
+    outgroup: yes
+  drosophila-melanogaster:
+    code: DRME
+    outgroup: yes
 
 config_orthomcl:
   dbLogin: 'orthomcl'
