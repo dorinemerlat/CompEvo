@@ -1,188 +1,187 @@
-# rule reformat_fasta:
-#     input:
-#         proteom = "resources/{specie}_proteins.fa"
-#     output:
-#         proteom_reformat = "results/OrthoMCL/reformat/{specie}_proteins_reformat.fa"
-#     log:
-#         "logs/reformat_fasta/{specie}.log"
-#     conda:
-#         get_conda("orthomcl")
-#         # "orthomcl"
-#     threads: 20
-#     shell:
-#         """
-#         awk -v OFS='\t' '{{if ($0 ~ /^>/) print $1; else print $0;}}' {input.proteom} | 
-#         awk -F'|' '{{if ($0 ~ /^>/) print \">\" $3; else print $0;}}' | 
-#         sed  's/|>/|/g' > {output.proteom_reformat}
-#         """
+rule reformat_fasta:
+    input:
+        proteom = "resources/{specie}_proteins.fa"
+    output:
+        proteom_reformat = "results/OrthoMCL/reformat/{specie}_proteins_reformat.fa"
+    log:
+        "logs/reformat_fasta/{specie}.log"
+    conda:
+        get_conda("orthomcl")
+    threads: 20
+    shell:
+        """
+        awk -v OFS='\t' '{{if ($0 ~ /^>/) print $1; else print $0;}}' {input.proteom} | 
+        awk -F'|' '{{if ($0 ~ /^>/) print \">\" $3; else print $0;}}' | 
+        sed  's/|>/|/g' > {output.proteom_reformat}
+        """
 
-# rule clean_proteins:
-#     input:
-#         rules.reformat_fasta.output
-#     output:
-#         link = temp("results/OrthoMCL/compliantFasta/{specie}.temp"), # permet juste de passer à la règle suivante, le vrai output c'est results/OrthoMCL/compliantFasta
-#     log:
-#         "logs/clean_proteins/{specie}.log"
-#     conda:
-#         get_conda("orthomcl")
-#     threads:20
-#     params:
-#         specie="{specie}",
-#         code_taxon = get_code_taxon
-#     shell:
-#         """
-#         if [ ! -d results/OrthoMCL/compliantFasta ] ; then
-#            mkdir results/OrthoMCL/compliantFasta
-#            echo '1'
-#         fi
-#         cd results/OrthoMCL/compliantFasta
-#         # taxon_code=$(echo {params.specie} |awk -F'-' '{{print toupper(substr($1,1,2) substr($2,1,2))}}') 
-#         echo {params.code_taxon}
-#         orthomclAdjustFasta {params.code_taxon} ../../../{input} 1
-#         touch ../../../{output.link}
-#         """
+rule clean_proteins:
+    input:
+        rules.reformat_fasta.output
+    output:
+        link = temp("results/OrthoMCL/compliantFasta/{specie}.temp"), # permet juste de passer à la règle suivante, le vrai output c'est results/OrthoMCL/compliantFasta
+    log:
+        "logs/clean_proteins/{specie}.log"
+    conda:
+        get_conda("orthomcl")
+    threads:20
+    params:
+        specie="{specie}",
+        code_taxon = get_code_taxon
+    shell:
+        """
+        if [ ! -d results/OrthoMCL/compliantFasta ] ; then
+           mkdir results/OrthoMCL/compliantFasta
+           echo '1'
+        fi
+        cd results/OrthoMCL/compliantFasta
+        # taxon_code=$(echo {params.specie} |awk -F'-' '{{print toupper(substr($1,1,2) substr($2,1,2))}}') 
+        echo {params.code_taxon}
+        orthomclAdjustFasta {params.code_taxon} ../../../{input} 1
+        touch ../../../{output.link}
+        """
 
         
-# rule filter_proteins:
-#     input:
-#         link = expand("results/OrthoMCL/compliantFasta/{specie}.temp", specie=SPECIES)
-#     output:
-#         good_proteins = "results/OrthoMCL/goodProteins.fasta"
-#     conda:
-#         get_conda("orthomcl")
-#     log:
-#         "logs/filter_proteins.log"
-#     threads:20
-#     shell:
-#         """
-#         cd results/OrthoMCL/ ; 
-#         orthomclFilterFasta compliantFasta 10 20
-#         """
+rule filter_proteins:
+    input:
+        link = expand("results/OrthoMCL/compliantFasta/{specie}.temp", specie=SPECIES)
+    output:
+        good_proteins = "results/OrthoMCL/goodProteins.fasta"
+    conda:
+        get_conda("orthomcl")
+    log:
+        "logs/filter_proteins.log"
+    threads:20
+    shell:
+        """
+        cd results/OrthoMCL/ ; 
+        orthomclFilterFasta compliantFasta 10 20
+        """
 
-# rule make_blast:
-#     input:
-#         good_proteins = rules.filter_proteins.output
-#     output:
-#         bank = "results/OrthoMCL/blastBank/bank_blast.pdb"
-#     conda:
-#         get_conda("orthomcl")
-#     log:
-#         "logs/make_blast.log"
-#     params:
-#         bank = "results/OrthoMCL/bank_blast"
-#     threads:100
-#     shell:
-#         """
-#         makeblastdb -in {input.good_proteins} -dbtype prot -parse_seqids -out {params.bank}
-#         """
+rule make_blast:
+    input:
+        good_proteins = rules.filter_proteins.output
+    output:
+        bank = "results/OrthoMCL/blastBank/bank_blast.pdb"
+    conda:
+        get_conda("orthomcl")
+    log:
+        "logs/make_blast.log"
+    params:
+        bank = "results/OrthoMCL/bank_blast"
+    threads:100
+    shell:
+        """
+        makeblastdb -in {input.good_proteins} -dbtype prot -parse_seqids -out {params.bank}
+        """
         
-# rule split_proteins:
-#     input:
-#         good_proteins = rules.filter_proteins.output
-#     output:
-#         split_proteins = expand("results/OrthoMCL/splited_proteins/goodProteins.part-{part}.fasta", part = get_part())
-#     conda:
-#         get_conda("orthomcl")
-#     log:
-#          "logs/split_proteins.log"
-#     threads:1
-#     shell:
-#         """
-#         fasta-splitter --n-parts 10000 {input.good_proteins} --out-dir results/OrthoMCL/splited_proteins
-#         """
+rule split_proteins:
+    input:
+        good_proteins = rules.filter_proteins.output
+    output:
+        split_proteins = expand("results/OrthoMCL/splited_proteins/goodProteins.part-{part}.fasta", part = get_part())
+    conda:
+        get_conda("orthomcl")
+    log:
+         "logs/split_proteins.log"
+    threads:1
+    shell:
+        """
+        fasta-splitter --n-parts 10000 {input.good_proteins} --out-dir results/OrthoMCL/splited_proteins
+        """
 
-# rule blast:
-#     input:
-#         bank = rules.make_blast.output.bank,
-#         query = "results/OrthoMCL/splited_proteins/goodProteins.part-{part}.fasta"
-#     output:
-#         goodProteins = "results/OrthoMCL/splited_blast/goodProteins.part-{part}.tsv"    
-#     conda:
-#         get_conda("orthomcl")
-#     log:
-#         "logs/blast/goodProteins.part-{part}.log"
-#     params:
-#         bank = "results/OrthoMCL/bank_blast"
-#     threads:16
-#     shell:
-#         """
-#         blastp -db {params.bank} -query {input.query} -outfmt 6 -out {output.goodProteins}
-#         """
+rule blast:
+    input:
+        bank = rules.make_blast.output.bank,
+        query = "results/OrthoMCL/splited_proteins/goodProteins.part-{part}.fasta"
+    output:
+        goodProteins = "results/OrthoMCL/splited_blast/goodProteins.part-{part}.tsv"    
+    conda:
+        get_conda("orthomcl")
+    log:
+        "logs/blast/goodProteins.part-{part}.log"
+    params:
+        bank = "results/OrthoMCL/bank_blast"
+    threads:16
+    shell:
+        """
+        blastp -db {params.bank} -query {input.query} -outfmt 6 -out {output.goodProteins}
+        """
 
 
-# rule merge_and_convert:
-#     input:
-#         blast_split = expand("results/OrthoMCL/splited_blast/goodProteins.part-{part}.tsv", part = get_part())
-#     output:
-#         blast_all = "results/OrthoMCL/blast/blast_results.tsv",
-#         blast_mysql = "results/OrthoMCL/blast/similarSequences.txt"
-#     conda:
-#         get_conda("orthomcl")
-#     log:
-#         "logs/merge_and_convert.log"
-#     threads:10
-#     shell:
-#         """
-#         cat {input.blast_split} > {output.blast_all}
-#         orthomclBlastParser {output.blast_all} results/OrthoMCL/compliantFasta/ >> {output.blast_mysql}
-#         """
+rule merge_and_convert:
+    input:
+        blast_split = expand("results/OrthoMCL/splited_blast/goodProteins.part-{part}.tsv", part = get_part())
+    output:
+        blast_all = "results/OrthoMCL/blast/blast_results.tsv",
+        blast_mysql = "results/OrthoMCL/blast/similarSequences.txt"
+    conda:
+        get_conda("orthomcl")
+    log:
+        "logs/merge_and_convert.log"
+    threads:10
+    shell:
+        """
+        cat {input.blast_split} > {output.blast_all}
+        orthomclBlastParser {output.blast_all} results/OrthoMCL/compliantFasta/ >> {output.blast_mysql}
+        """
 
-# rule orthomcl_db:
-#     input:
-#         blast_mysql = rules.merge_and_convert.output.blast_mysql
-#     output:
-#         orthomcl_config = "results/OrthoMCL/orthomcl/orthomcl.config",
-#     conda:
-#         get_conda("orthomcl")
-#     threads:20   
-#     log:
-#         "logs/orthomcl_db.log"
-#     params:
-#         dbLogin = config['config_orthomcl']['dbLogin'],
-#         dbPassword = config['config_orthomcl']['dbPassword'],
-#         localHost = config['config_orthomcl']['localHost']
-#     shell:
-#         """
-#         CompEvo=$(pwd)
-#         cd results/OrthoMCL/
+rule orthomcl_db:
+    input:
+        blast_mysql = rules.merge_and_convert.output.blast_mysql
+    output:
+        orthomcl_config = "results/OrthoMCL/orthomcl/orthomcl.config",
+    conda:
+        get_conda("orthomcl")
+    threads:20   
+    log:
+        "logs/orthomcl_db.log"
+    params:
+        dbLogin = config['config_orthomcl']['dbLogin'],
+        dbPassword = config['config_orthomcl']['dbPassword'],
+        localHost = config['config_orthomcl']['localHost']
+    shell:
+        """
+        CompEvo=$(pwd)
+        cd results/OrthoMCL/
 
-#         echo 'dbVendor=mysq
-# dbConnectString=dbi:mysql:orthomcl:mysql_local_infile=1:{params.localHost}:3306
-# dbLogin={params.dbLogin}
-# dbPassword={params.dbPassword}
-# similarSequencesTable=SimilarSequences
-# orthologTable=Ortholog
-# inParalogTable=InParalog
-# coOrthologTable=CoOrtholog
-# interTaxonMatchView=InterTaxonMatch
-# percentMatchCutoff=50
-# evalueExponentCutoff=-5
-# oracleIndexTblSpc=NONE' > $CompEvo/{output.orthomcl_config}
+        echo 'dbVendor=mysq
+dbConnectString=dbi:mysql:orthomcl:mysql_local_infile=1:{params.localHost}:3306
+dbLogin={params.dbLogin}
+dbPassword={params.dbPassword}
+similarSequencesTable=SimilarSequences
+orthologTable=Ortholog
+inParalogTable=InParalog
+coOrthologTable=CoOrtholog
+interTaxonMatchView=InterTaxonMatch
+percentMatchCutoff=50
+evalueExponentCutoff=-5
+oracleIndexTblSpc=NONE' > $CompEvo/{output.orthomcl_config}
 
-#         orthomclInstallSchema $CompEvo/{output.orthomcl_config}
-#         orthomclLoadBlast $CompEvo/{output.orthomcl_config} $CompEvo/{input.blast_mysql}
-#         """
+        orthomclInstallSchema $CompEvo/{output.orthomcl_config}
+        orthomclLoadBlast $CompEvo/{output.orthomcl_config} $CompEvo/{input.blast_mysql}
+        """
 
-# rule compute_pairwise_relationships:
-#     input:
-#         orthomcl_config = rules.orthomcl_db.output.orthomcl_config
-#     output:
-#         orthologs = "results/OrthoMCL/orthomcl/pairs/orthologs.txt",
-#         inparalogs = "results/OrthoMCL/orthomcl/pairs/inparalogs.txt",
-#         coorthologs = "results/OrthoMCL/orthomcl/pairs/coorthologs.txt",
-#         mclInput = "results/OrthoMCL/orthomcl/mclInput"
-#     conda:
-#         get_conda("orthomcl")
-#     log:
-#         "logs/compute_pairwise_relationships.log"
-#     shell:
-#         """
-#         mkdir -p results/OrthoMCL/orthomcl/
-#         cd results/OrthoMCL/orthomcl/
+rule compute_pairwise_relationships:
+    input:
+        orthomcl_config = rules.orthomcl_db.output.orthomcl_config
+    output:
+        orthologs = "results/OrthoMCL/orthomcl/pairs/orthologs.txt",
+        inparalogs = "results/OrthoMCL/orthomcl/pairs/inparalogs.txt",
+        coorthologs = "results/OrthoMCL/orthomcl/pairs/coorthologs.txt",
+        mclInput = "results/OrthoMCL/orthomcl/mclInput"
+    conda:
+        get_conda("orthomcl")
+    log:
+        "logs/compute_pairwise_relationships.log"
+    shell:
+        """
+        mkdir -p results/OrthoMCL/orthomcl/
+        cd results/OrthoMCL/orthomcl/
 
-#         orthomclPairs orthomcl.config pairs.log cleanup=no
-#         orthomclDumpPairsFiles orthomcl.config
-#         """
+        orthomclPairs orthomcl.config pairs.log cleanup=no
+        orthomclDumpPairsFiles orthomcl.config
+        """
 
 
 rule clustering:
@@ -251,3 +250,6 @@ rule best_inflation:
         wc -l {input.sco_groups}
         touch {output.sco_groups}
         """
+
+# trouver le meilleur outgroup
+
