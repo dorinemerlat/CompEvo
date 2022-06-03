@@ -1,7 +1,0 @@
-Building DAG of jobs...
-MissingInputException in line 1 of /enadisk/maison/merlat/Myriapodes/CompEvo/workflow/rules/run_orthomcl.smk:
-Missing input files for rule reformat_fasta:
-    output: results/OrthoMCL/reformat/cryptops-parisi_proteins_reformat.fa
-    wildcards: specie=cryptops-parisi
-    affected files:
-        resources/cryptops-parisi_proteins.fa

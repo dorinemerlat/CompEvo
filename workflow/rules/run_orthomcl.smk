@@ -7,12 +7,12 @@ rule reformat_fasta:
         "logs/reformat_fasta/{specie}.log"
     conda:
         get_conda("orthomcl")
-    threads: 20
+    threads: 1
     shell:
         """
         awk -v OFS='\t' '{{if ($0 ~ /^>/) print $1; else print $0;}}' {input.proteom} | 
         awk -F'|' '{{if ($0 ~ /^>/) print \">\" $3; else print $0;}}' | 
-        sed  's/|>/|/g' > {output.proteom_reformat}
+        sed  's/|>/|/g' |sed 's/\*//g' > {output.proteom_reformat}
         """
 
 rule clean_proteins:
@@ -24,7 +24,7 @@ rule clean_proteins:
         "logs/clean_proteins/{specie}.log"
     conda:
         get_conda("orthomcl")
-    threads:20
+    threads:1
     params:
         specie="{specie}",
         code_taxon = get_code_taxon
@@ -51,7 +51,7 @@ rule filter_proteins:
         get_conda("orthomcl")
     log:
         "logs/filter_proteins.log"
-    threads:20
+    threads:1
     shell:
         """
         cd results/OrthoMCL/ ; 
@@ -60,49 +60,49 @@ rule filter_proteins:
 
 rule make_blast:
     input:
-        good_proteins = rules.filter_proteins.output
+        good_proteins = rules.filter_proteins.output.good_proteins
     output:
-        bank = "results/OrthoMCL/blastBank/bank_blast.pdb"
+        bank = "results/OrthoMCL/blastBank/blastBank.pdb"
     conda:
         get_conda("orthomcl")
     log:
         "logs/make_blast.log"
     params:
-        bank = "results/OrthoMCL/blastBank/bank_blast"
-    threads:100
+        bank = "results/OrthoMCL/blastBank/blastBank"
+    threads:1
     shell:
         """
         makeblastdb -in {input.good_proteins} -dbtype prot -parse_seqids -out {params.bank}
         """
         
-rule split_proteins:
-    input:
-        good_proteins = rules.filter_proteins.output
-    output:
-        split_proteins = expand("results/OrthoMCL/splited_proteins/goodProteins.part-{part}.fasta", part = get_part())
-    conda:
-        get_conda("orthomcl")
-    log:
-         "logs/split_proteins.log"
-    threads:1
-    shell:
-        """
-        fasta-splitter --n-parts 10000 {input.good_proteins} --out-dir results/OrthoMCL/splited_proteins
-        """
+# rule split_proteins:
+#     input:
+#         good_proteins = rules.filter_proteins.output.good_proteins
+#     output:
+#         split_proteins = expand("results/OrthoMCL/splited_proteins/goodProteins.part-{part}.fasta", part = get_part())
+#     conda:
+#         get_conda("orthomcl")
+#     log:
+#          "logs/split_proteins.log"
+#     threads:1
+#     shell:
+#         """
+#         fasta-splitter --n-parts 10000 {input.good_proteins} --out-dir results/OrthoMCL/splited_proteins
+#         """
 
 rule blast:
     input:
         bank = rules.make_blast.output.bank,
-        query = "results/OrthoMCL/splited_proteins/goodProteins.part-{part}.fasta"
+        query = rules.filter_proteins.output.good_proteins
     output:
-        goodProteins = "results/OrthoMCL/splited_blast/goodProteins.part-{part}.tsv"    
+        goodProteins = "results/OrthoMCL/blast/goodProteins_blast.tsv"    
     conda:
         get_conda("orthomcl")
     log:
-        "logs/blast/goodProteins.part-{part}.log"
+        "logs/blast.log"
     params:
-        bank = "results/OrthoMCL/bank_blast"
-    threads:16
+        bank = "results/OrthoMCL/blastBank/blastBank"
+    threads:300
     shell:
         """
         blastp -db {params.bank} -query {input.query} -outfmt 6 -out {output.goodProteins}
@@ -111,9 +111,9 @@ rule blast:
 
 rule merge_and_convert:
     input:
-        blast_split = expand("results/OrthoMCL/splited_blast/goodProteins.part-{part}.tsv", part = get_part())
+        blast_split = rules.output.blast.goodProteins
     output:
-        blast_all = "results/OrthoMCL/blast/blast_results.tsv",
+        # blast_all = "results/OrthoMCL/blast/blast_results.tsv",
         blast_mysql = "results/OrthoMCL/blast/similarSequences.txt"
     conda:
         get_conda("orthomcl")
@@ -122,13 +122,12 @@ rule merge_and_convert:
     threads:10
     shell:
         """
-        cat {input.blast_split} > {output.blast_all}
         orthomclBlastParser {output.blast_all} results/OrthoMCL/compliantFasta/ >> {output.blast_mysql}
         """
 
 rule orthomcl_db:
     input:
-        blast_mysql = rules.merge_and_convert.output.blast_mysql
+        blast_mysql = "results/OrthoMCL/blast/similarSequences.txt"
     output:
         orthomcl_config = "results/OrthoMCL/orthomcl/orthomcl.config",
     conda:
@@ -145,7 +144,7 @@ rule orthomcl_db:
         CompEvo=$(pwd)
         cd results/OrthoMCL/
 
-        echo 'dbVendor=mysq
+        echo 'dbVendor=mysql
 dbConnectString=dbi:mysql:orthomcl:mysql_local_infile=1:{params.localHost}:3306
 dbLogin={params.dbLogin}
 dbPassword={params.dbPassword}
@@ -158,8 +157,8 @@ percentMatchCutoff=50
 evalueExponentCutoff=-5
 oracleIndexTblSpc=NONE' > $CompEvo/{output.orthomcl_config}
 
-        orthomclInstallSchema $CompEvo/{output.orthomcl_config}
-        orthomclLoadBlast $CompEvo/{output.orthomcl_config} $CompEvo/{input.blast_mysql}
+        # orthomclInstallSchema $CompEvo/{output.orthomcl_config}
+        # orthomclLoadBlast $CompEvo/{output.orthomcl_config} $CompEvo/{input.blast_mysql}
         """
 
 rule compute_pairwise_relationships:
@@ -197,7 +196,7 @@ rule clustering:
         sco_list = "results/OrthoMCL/clustering/inflation_{inflation}/scos_list_{inflation}.txt",
         sco_groups = "results/OrthoMCL/clustering/inflation_{inflation}/scos_{inflation}.ids",
         named_sco_groups = "results/OrthoMCL/clustering/inflation_{inflation}/named_groups_{inflation}_scos.txt",
-        orthogroups_seq = "results/OrthoMCL/clustering/inflation_{inflation}/orthogroups_{inflation}"
+        orthogroups_seq = directory("results/OrthoMCL/clustering/inflation_{inflation}/orthogroups_{inflation}")
     params:
         CopyNumberGen = "workflow/scripts/CopyNumberGen.sh",
         ExtractSCOs = "workflow/scripts/ExtractSCOs.sh",
@@ -214,7 +213,7 @@ rule clustering:
         mcl {input.mclInput} --abc -I {wildcards.inflation} -o {output.ortholog_groups}
 
         # Name the groups called by mcl program.
-        orthomclMclToGroups OG${wildcards.inflation}_ 1000 < {output.ortholog_groups} > {output.named_groups}
+        orthomclMclToGroups OG{wildcards.inflation}_ 1000 < {output.ortholog_groups} > {output.named_groups}
 
         # Frequency table for each ortholog
         {params.CopyNumberGen} {output.named_groups} > {output.named_groups_freq}
@@ -227,8 +226,10 @@ rule clustering:
         grep -Fw -f {output.sco_groups} {output.named_groups} > {output.named_sco_groups}
 
         # Extract the sequences
-        {params.ExtractSeq}-o {output.orthogroups_seq} {output.named_sco_groups}  {input.good_proteins}
+        {params.ExtractSeq} -o {output.orthogroups_seq} {output.named_sco_groups} {input.good_proteins}
+
         """
+
 
 def inflation():
     inflation = list(np.arange(1,1.55,0.1)) + list(np.arange(2,6.5,0.5))
@@ -236,21 +237,84 @@ def inflation():
         inflation[i] = str(np.round(inflation[i],1))
     return inflation
 
-rule best_inflation:
+def get_outgroup(INFOS):
+    outgroup = ""
+    for key, value in INFOS.items():
+        if 'outgroup' in value:
+            if value['outgroup'] == True:
+                outgroup += value['code'] + '_'
+    outgroup += '_'
+    outgroup = outgroup.replace('__','')
+    return outgroup
+
+
+rule best_orthogroup:
     input:
-        sco_groups = expand("results/OrthoMCL/clustering/inflation_{inflation}/scos_list_{inflation}.txt", inflation = inflation()),
+        all_table_in = "results/OrthoMCL/clustering/inflation_{best_inflation}/named_groups_{best_inflation}_freq.txt",
+        SCO_table_in = "results/OrthoMCL/clustering/inflation_{best_inflation}/scos_list_{best_inflation}.txt"
     output:
-        sco_groups = "results/OrthoMCL/clustering/inflation_to_use.txt"
+        all_table_out = "results/OrthoMCL/clustering/inflation_{best_inflation}/named_groups_{best_inflation}_freq_bestOG.tsv", 
+        SCO_table_out = "results/OrthoMCL/clustering/inflation_{best_inflation}/scos_list_{best_inflation}_bestOG.tsv"
     conda:
         get_conda("orthomcl")
+    params:
+        findBestOutgroup = "workflow/scripts/findBestOutgroup.py",
+        # drawOrthologyGroups = "workflow/scripts/drawOrthologyGroups.R",
+        ougroups = get_outgroup(INFOS)
     log:
-        "logs/best_inflation.log"
+        "logs/best_orthogroup/best_orthogroup_{best_inflation}.log"
     shell: 
         """
-        wc -l {input.sco_groups}
-        touch {output.sco_groups}
+        python {params.findBestOutgroup} --inputAllFreq {input.all_table_in} --outputAllFreq {output.all_table_out} \
+            --inputScoFreq {input.SCO_table_in} --outputScoFreq {output.SCO_table_out} --outgroups {params.ougroups}
         """
 
-# trouver le meilleur outgroup
+rule infos_to_json:
+    output:
+        "resources/infos.json"
+    params:
+        infos = INFOS
+    run:
+        with open(output[0], "w") as outfile:
+            json.dump(params[0], outfile)
 
 # trier les protéines dans les fasta pour les mêmes dans le bon ordre
+rule organize_fasta:
+    input:
+        # best_inflation = rules.best_inflation.output.best_inflation,
+        fasta_nr = "results/OrthoMCL/clustering/inflation_{best_inflation}/orthogroups_{best_inflation}/OG{best_inflation}_{group}.fa", 
+        json = rules.infos_to_json.output
+    output:
+        fasta_r = "results/OrthoMCL/clustering/inflation_{best_inflation}/orthogroups_{best_inflation}_reformat/OG{best_inflation}_{group}_reformat.fa"
+    conda:
+        get_conda("orthomcl")
+    params:
+        organizeFasta = "workflow/scripts/organizeFasta.py",
+    log:
+        "logs/best_inflation_{best_inflation}_{group}.log"
+    shell: 
+        """
+        echo python {params.organizeFasta} -i {input.fasta_nr} -o {output.fasta_r} -j {input.json} 
+        """
+
+# rule maaft:
+#     input:
+#         fasta_r = rules.organize_fasta.output.fasta_r
+#     output:
+#         alignment = ""
+
+# rule concatenate_alignments:
+#     input:
+#         rules.maaft.output.alignement
+#     output:
+#         ""
+
+# rule raxml:
+#     input:
+#         rules.concatenate_alignments.output
+#     output:
+
+# rule draw_tree:
+#     input:
+#         rules.raxml.output
+#     output:

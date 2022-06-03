@@ -1,4 +1,0 @@
-SyntaxError:
-Not all output, log and benchmark files of rule split_proteins contain the same wildcards. This is crucial though, in order to avoid that two or more jobs write to the same file.
-  File "/enadisk/maison/merlat/Myriapodes/CompEvo/workflow/Snakefile", line 31, in <module>
-  File "/enadisk/maison/merlat/Myriapodes/CompEvo/workflow/rules/run_orthomcl.smk", line 91, in <module>

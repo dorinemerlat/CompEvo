@@ -1,5 +1,6 @@
 name: orthomcl
 channels:
+  - anaconda
   - conda-forge
   - bioconda
   - defaults
@@ -8,10 +9,12 @@ dependencies:
   - _openmp_mutex=4.5=2_gnu
   - binutils_impl_linux-64=2.36.1=h193b22a_2
   - binutils_linux-64=2.36=hf3e587d_9
+  - biopython=1.79=py36h8f6f2f9_0
   - blast=2.12.0=hf3cf87c_4
   - bzip2=1.0.8=h7f98852_4
   - c-ares=1.18.1=h7f98852_0
-  - ca-certificates=2021.10.8=ha878542_0
+  - ca-certificates=2022.5.18.1=ha878542_0
+  - cdbtools=0.99=hd03093a_7
   - curl=7.83.1=h7bff187_0
   - entrez-direct=16.2=he881be0_0
   - fasta-splitter=0.2.6=hdfd78af_1
@@ -21,15 +24,21 @@ dependencies:
   - keyutils=1.6.1=h166bdaf_0
   - krb5=1.19.3=h3790be6_0
   - ld_impl_linux-64=2.36.1=hea4e1c9_2
+  - libblas=3.9.0=14_linux64_openblas
+  - libcblas=3.9.0=14_linux64_openblas
   - libcurl=7.83.1=h7bff187_0
   - libedit=3.1.20191231=he28a2e2_2
   - libev=4.33=h516909a_1
   - libffi=3.4.2=h7f98852_5
   - libgcc-devel_linux-64=10.3.0=he6cfe16_16
   - libgcc-ng=12.1.0=h8d9b700_16
+  - libgfortran-ng=12.1.0=h69a702a_16
+  - libgfortran5=12.1.0=hdcd56e2_16
   - libgomp=12.1.0=h8d9b700_16
+  - liblapack=3.9.0=14_linux64_openblas
   - libnghttp2=1.47.0=h727a467_0
   - libnsl=2.0.0=h7f98852_0
+  - libopenblas=0.3.20=pthreads_h78a6416_0
   - libsanitizer=10.3.0=h26c7422_16
   - libssh2=1.10.0=ha56f1ee_2
   - libstdcxx-ng=12.1.0=ha89aaad_16
@@ -38,8 +47,10 @@ dependencies:
   - mysql-connector-c=6.1.11=h6eb9d5d_1007
   - mysqlclient=1.3.10=py36_0
   - ncurses=6.3=h27087fc_1
+  - numpy=1.19.5=py36hfc0c790_2
   - openssl=1.1.1o=h166bdaf_0
   - orthomcl=2.0.9=hdfd78af_5
+  - pandas=1.1.5=py36ha9443f7_0
   - pcre=8.45=h9c3ff4c_0
   - perl=5.32.1=2_h7f98852_perl5
   - perl-archive-tar=2.40=pl5321hdfd78af_0
@@ -70,9 +81,12 @@ dependencies:
   - perl-types-serialiser=1.01=pl5321hdfd78af_0
   - pip=21.3.1=pyhd8ed1ab_0
   - python=3.6.15=hb7a2778_0_cpython
+  - python-dateutil=2.8.2=pyhd3eb1b0_0
   - python_abi=3.6=2_cp36m
+  - pytz=2021.3=pyhd3eb1b0_0
   - readline=8.1=h46c0cb4_0
   - setuptools=58.0.4=py36h5fab9bb_2
+  - six=1.16.0=pyhd3eb1b0_1
   - sqlite=3.38.5=h4ff8645_0
   - sysroot_linux-64=2.12=he073ed8_15
   - tk=8.6.12=h27826a3_0

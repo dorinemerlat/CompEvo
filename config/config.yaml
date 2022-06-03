@@ -71,6 +71,7 @@ species:
   ixodes-scapularis:
     code: IXSC
     order: 24
+    outgroup: yes
   daphnia-pulex:
     code: DAPU
     outgroup: yes
@@ -84,3 +85,4 @@ config_orthomcl:
   dbLogin: 'orthomcl'
   dbPassword: 'O3kj3NKmoseRwZP05wXynH5klqnn'
   localHost: 'ena'
+  inflation: "3.0"
