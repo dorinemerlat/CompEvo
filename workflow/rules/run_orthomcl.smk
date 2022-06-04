@@ -19,7 +19,7 @@ rule clean_proteins:
     input:
         rules.reformat_fasta.output
     output:
-        link = temp("results/OrthoMCL/compliantFasta/{specie}.temp"), # permet juste de passer à la règle suivante, le vrai output c'est results/OrthoMCL/compliantFasta
+        link = temp("results/OrthoMCL/compliantFasta/{specie}.temp") # permet juste de passer à la règle suivante, le vrai output c'est results/OrthoMCL/compliantFasta
     log:
         "logs/clean_proteins/{specie}.log"
     conda:
@@ -74,32 +74,45 @@ rule make_blast:
         """
         makeblastdb -in {input.good_proteins} -dbtype prot -parse_seqids -out {params.bank}
         """
-        
-# rule split_proteins:
-#     input:
-#         good_proteins = rules.filter_proteins.output.good_proteins
-#     output:
-#         split_proteins = expand("results/OrthoMCL/splited_proteins/goodProteins.part-{part}.fasta", part = get_part())
-#     conda:
-#         get_conda("orthomcl")
-#     log:
-#          "logs/split_proteins.log"
-#     threads:1
-#     shell:
-#         """
-#         fasta-splitter --n-parts 10000 {input.good_proteins} --out-dir results/OrthoMCL/splited_proteins
-#         """
+
+def get_part(number):
+    len_number = len(str(number))
+    number = int(number) + 1
+    numbers = list(range(1, number))
+    zero_filled_numbers = list()
+    for i in numbers:
+        i = str(i)
+        zero_filled_numbers.append(i.zfill(len_number))
+    
+    return zero_filled_numbers
+
+rule split_proteins:
+    input:
+        good_proteins = rules.filter_proteins.output.good_proteins
+    output:
+        split_proteins = expand("results/OrthoMCL/splited_proteins/goodProteins.part-{part}.fasta", part = get_part(config['split_proteins']))
+    params:
+        number_split = config['split_proteins']
+    conda:
+        get_conda("orthomcl")
+    log:
+         "logs/split_proteins.log"
+    threads:20
+    shell:
+        """
+        fasta-splitter --n-parts {params.number_split} {input.good_proteins} --out-dir results/OrthoMCL/splited_proteins
+        """
 
 rule blast:
     input:
         bank = rules.make_blast.output.bank,
-        query = rules.filter_proteins.output.good_proteins
+        query = "results/OrthoMCL/splited_proteins/goodProteins.part-{part}.fasta"
     output:
-        goodProteins = "results/OrthoMCL/blast/goodProteins_blast.tsv"    
+        goodProteins = "results/OrthoMCL/blast/goodProteins_blast.part-{part}.tsv"    
     conda:
         get_conda("orthomcl")
     log:
-        "logs/blast.log"
+        "logs/blast_part-{part}.log"
     params:
         bank = "results/OrthoMCL/blastBank/blastBank"
     threads:300
@@ -111,9 +124,9 @@ rule blast:
 
 rule merge_and_convert:
     input:
-        blast_split = rules.output.blast.goodProteins
+        blast_split = expand("results/OrthoMCL/blast/goodProteins_blast.part-{part}.tsv", part = get_part(config['split_proteins']))
     output:
-        # blast_all = "results/OrthoMCL/blast/blast_results.tsv",
+        blast_all = "results/OrthoMCL/blast/blast_results.tsv",
         blast_mysql = "results/OrthoMCL/blast/similarSequences.txt"
     conda:
         get_conda("orthomcl")
@@ -122,6 +135,7 @@ rule merge_and_convert:
     threads:10
     shell:
         """
+
         orthomclBlastParser {output.blast_all} results/OrthoMCL/compliantFasta/ >> {output.blast_mysql}
         """
 

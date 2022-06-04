@@ -86,3 +86,5 @@ config_orthomcl:
   dbPassword: 'O3kj3NKmoseRwZP05wXynH5klqnn'
   localHost: 'ena'
   inflation: "3.0"
+
+split_proteins: '50'
